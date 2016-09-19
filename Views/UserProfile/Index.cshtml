@@ -1,0 +1,537 @@
+﻿
+@{
+    ViewBag.Title = "Users";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+
+<style>
+    .angular-google-map-container {
+        height: 400px;
+    }
+
+    .eTitle a {
+        font-size: 1.5em;
+        text-decoration: none;
+        color: #686868;
+    }
+
+        .eTitle a:hover {
+            color: #686868;
+            text-decoration: underline;
+        }
+
+    .eventDivs {
+        background-color: #EDEDED;
+    }
+
+    .gm-style-iw {
+        overflow: auto !important;
+        max-width: 300px;
+        min-height: 75px;
+        max-height: 175px;
+    }
+
+        .gm-style-iw > div {
+            overflow: auto !important;
+            max-width: 300px;
+            min-height: 75px;
+            max-height: 175px;
+        }
+
+    .markerPop > a {
+        font-size: .9em;
+        overflow: hidden;
+    }
+
+    .markerPop > p {
+        font-size: .7em;
+        overflow: hidden;
+    }
+
+    .grid {
+        list-style: none;
+        background: #fff;
+        border-radius: 6px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        -webkit-transition: all 0.6s ease-out;
+        transition: all 0.6s ease-out;
+        box-shadow: 2px 2px 5px #393939;
+    }
+
+    .grid-img {
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+        width: 100%;
+        vertical-align: middle;
+        -webkit-transition: opacity 0.6s ease-out;
+        transition: opacity 0.6s ease-out;
+        background-color: #fff;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+        .grid-img.img-loaded {
+            visibility: visible;
+            opacity: 1;
+        }
+
+
+    /*** description section css ***/
+.img-desc-wrap {
+  padding: 10px;
+
+}
+.img-desc-wrap .title {
+  font-size: 18px;
+  line-height: 22px;
+}
+.img-desc-wrap .uploaded-date {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #999;
+}
+.img-desc-wrap .likes-watch-wrap {
+  margin-top: 10px;
+}
+.img-desc-wrap .likes,
+.img-desc-wrap .watch {
+  display: inline-block;
+  margin-right: 20px;
+}
+/*** description section end ***/
+
+.greenIcon{
+    color:chartreuse;
+}
+
+</style>
+
+<section class="userDivs">
+    <!-- Page content-->
+    <div class="content-wrapper" data-ng-controller="userController as users" id="userController">
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h3 style="display:inline-block; margin-top:10.5px">Discover Users</h3>
+                <div style="display:inline-block; margin-top:10.5px;" class="pull-right">
+                    <button type="button" class="mb-sm btn btn-default btn-oval" ng-click="users.SearchEvents()">Nearby Users</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <form id="eventForm" name="users.eventForm" ng-submit="users.Search()">
+                    <input type="text"
+                           class="pull-left form-control form-control-rounded"
+                           style="width:250px"
+                           placeholder="Search users..."
+                           ng-class="{'error': users.showNewEventErrors && !users.eventForm.searchString.$valid}"
+                           name="searchString"
+                           id="searchString"
+                           ng-model="users.searchString">
+                    <input type="text"
+                           class="pull-left form-control form-control-rounded"
+                           style="width:250px; margin-left:3px;"
+                           placeholder="Enter Zip..."
+                           ng-class="{'error': users.showNewEventErrors && !users.eventForm.zipCode.$valid}"
+                           name="zipCode"
+                           id="zipCode"
+                           ng-model="users.zipCode">
+                    <div role="alert" class="help-inline error">
+                        <span class="error" ng-show="users.showNewEventErrors && users.eventForm.zipCode.$error.minlength">ZipCode must be 5 characters</span>
+                        <span class="error" ng-show="users.showNewEventErrors && users.eventForm.zipCode.$error.maxlength">ZipCode must be 5 characters</span>
+                    </div>
+                    <button type="submit" class="pull-right mb-sm btn btn-oval btn-info">Submit</button>
+                </form>
+            </div>
+        </div>
+        <div class="panel panel-info">
+            <div class="panel-heading">
+                <h4 style="display:inline-block">Event Map</h4>
+                <a href="#" data-tool="panel-collapse" data-toggle="tooltip" title="" class="pull-right" style="display:inline-block; margin-top:10.5px;" data-original-title="Collapse Panel">
+                    <em class="fa fa-minus"></em>
+                </a>
+            </div>
+            <div class="panel-wrapper collapse in" aria-expanded="true">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div id="map_canvas" class="angular-google-map-container">
+                                <ui-gmap-google-map center="users.map.center" zoom="users.map.zoom" draggable="true" options="options">
+                                    <ui-gmap-markers models="users.eventMarkers"
+                                                     coords="'self'"
+                                                     icon="'{users.selectedMarker.icon}'"
+                                                     click="users.onMarkerClick">
+                                        <ui-gmap-windows show="'showWindow'" closeClick="'closeClick'" ng-cloak>
+                                            <div ng-non-bindable>
+                                                <div class="col-md-4">
+                                                    <img src="{{users.avatar.fullUrl}}" width="60" height="60" /><br />
+                                                </div>
+                                                <div class="col-md-8 markerPop">
+                                                    <a href="/events/details/{{id}}">{{title}}</a>
+                                                    <p>
+                                                        {{address}}<br />
+                                                        {{city}}, {{state}} {{zipCode}}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </ui-gmap-windows>
+                                    </ui-gmap-markers>
+                                </ui-gmap-google-map>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <ul class="dynamic-grid" angular-grid="users.items" grid-width="300" gutter-size="10" angular-grid-id="gallery" refresh-on-img-load="true">
+            <li data-ng-repeat="ur in users.items" class="grid">
+
+                <img ng-if="ur.avatar" src="{{ur.avatar.fullUrl}}" class="grid-img" alt="" data-actual-width="400" data-actual-height="400"/>
+                <img ng-if="!ur.avatar" src="https://i.imgur.com/ZOmi5R1.png" class="grid-img" alt="" data-actual-width="400" data-actual-height="400"/>
+                <div class="img-desc-wrap">
+                    <div class="title">
+                        {{ur.profileName}}
+                    </div>
+                    <div class="uploaded-date">
+                       Email : {{ur.profileEmail}}
+                    </div>
+                    <div class="likes-watch-wrap">
+                        <div class="likes"><span class="icon-eye"></span> {{ur.profileViewCount}}</div>
+                        <div class="watch"><span class="icon-link"></span> {{ur.connectionsCount}}</div>
+                        <div class="connect pull-right" ng-if="ur.isConnected == false" ng-click="users.addConnection(ur.userId)" ng-animate="zoomOut"><span class="icon-plus"></span> Add Connection</div>
+                        <div class="connect pull-right" ng-if="ur.isConnected == true"><span class="icon-check greenIcon"></span></div>
+                    </div>
+                </div>
+                
+
+                
+
+            </li>
+        </ul>
+    </div>
+</section>
+
+@section pageInitScripts{
+    <script src="//maps.googleapis.com/maps/api/js?key=AIzaSyC7D3_wXIH-aeBLeOG06Fw20i0lloRqTsM"></script>
+    <script src="~/Scripts/bower_components/lodash/dist/lodash.min.js"></script>
+    <script src="~/Scripts/bower_components/angular/angular.min.js"></script>
+    <script src="~/Scripts/bower_components/angular-simple-logger/dist/angular-simple-logger.min.js"></script>
+    <script src="~/Scripts/bower_components/angular-google-maps/dist/angular-google-maps.min.js"></script>
+    <script src="~/Scripts/sabio/modules/sabio.module.maps.js"></script>
+
+
+    <script src="~/Scripts/bower_components/angulargrid/angulargrid.js"></script>
+    <script src="~/Scripts/sabio/modules/sabio.module.angulargrid.js"></script>
+
+}
+
+@section scripts{
+    <script src="~/Scripts/sabio.services.events.js"></script>
+    <script src="~/Scripts/sabio.services.connections.js"></script>
+    <script src="~/Scripts/sabio.services.userEvents.js"></script>
+    <script src="~/Scripts/bower_components/moment/moment.js"></script>
+    <script src="~/Scripts/sabio.services.tags.js"></script>
+    <script src="~/Scripts/sabio.services.users.js"></script>
+    <script type="text/javascript">
+
+
+        //user service
+        (function () {
+            "use strict";
+            angular.module(APPNAME)
+                .factory('$userService', $userServiceFactory);
+
+            $userServiceFactory.$inject = ['$baseService'];
+
+            function $userServiceFactory($baseService) {
+                var userServiceObject = sabio.services.users;
+                var newService = $baseService.merge(true, {}, userServiceObject, $baseService);
+                return newService;
+            }
+        })();
+
+        //connection service
+        (function () {
+            "use strict";
+            angular.module(APPNAME)
+                .factory('$connectionService', $connectionServiceFactory);
+
+            $connectionServiceFactory.$inject = ['$baseService'];
+
+            function $connectionServiceFactory($baseService) {
+                var connectionServiceObject = sabio.services.connections;
+                var newService = $baseService.merge(true, {}, connectionServiceObject, $baseService);
+                return newService;
+            }
+        })();
+
+        //USER CONTROLLER
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .controller('userController', userController);
+
+            userController.$inject = ['$scope', '$baseController', "$uibModal", "$userService", "$connectionService"];
+
+            function userController(
+                $scope
+                , $baseController
+                , $uibModal
+                , $userService
+                , $connectionService) {
+
+                var vm = this;
+                vm.headingInfo = "Discover Users";
+                vm.items = null;
+                vm.selectedEvent = null;
+                vm.pageSize = 48;
+                vm.pageNumber = 1;
+                vm.hoverInfo = null;
+                vm.lat = null;
+                vm.lon = null;
+                vm.distance = null;
+                vm.searchString = null;
+                vm.userItem = null;
+                vm.eventForm = null;
+                vm.addressId = null;
+                vm.address = {};
+                vm.tagInfo = null;
+                vm.selectedMarker = null;
+                vm.zipCode = null;
+                vm.geocoder = null;
+                //vm.geocodeResponse = null;
+                vm.showNewEventErrors = false;
+                vm.eventForm = null;
+                vm.address = {};
+                vm.userMarkers = [];
+                vm.map = {
+                    center: {
+                        latitude: 39.12346,
+                        longitude: -94.74419
+                    },
+                    zoom: 4,
+                    bounds: {},
+
+                };
+
+                vm.options = {
+                    scrollwheel: false
+                };
+
+
+                vm.$scope = $scope;
+                vm.$uibModal = $uibModal;
+                vm.$userService = $userService;
+                vm.$connectionService = $connectionService;
+
+                vm.receiveUserItem = _receiveUserItem;
+                vm.receiveItems = _receiveItems;
+                vm.selectEvent = _selectEvent;
+                vm.onEventError = _onEventError;
+                vm.openModal = _openModal;
+                vm.SearchUsers = _SearchUsers;
+                vm.onMarkerClick = _onMarkerClick;
+                vm.codeAddress = _codeAddress;
+                vm.Search = _Search;
+                vm.addConnection = _addConnection;
+
+                $baseController.merge(vm, $baseController);
+
+                vm.notify = vm.$userService.getNotifier($scope);
+
+                _render();
+
+                function _render() {
+                    vm.geocoder = new google.maps.Geocoder();
+
+                    var payload = {};
+                    payload.PageSize = vm.pageSize;
+                    payload.PageNumber = vm.pageNumber;
+                    payload.Lat = vm.lat;
+                    payload.Lon = vm.lon;
+                    payload.Distance = vm.distance;
+                    payload.SearchString = vm.searchString;
+
+                    vm.$userService.discover(payload, vm.receiveItems, vm.onEventError);
+                    vm.$userService.getCurrent(vm.receiveUserItem, vm.onEventError);
+                }
+
+                function _receiveItems(data) {
+
+                    var markers = [];
+
+                    for (var i = 0; i < data.items.length; i++) {
+                        var user = data.items[i];
+                        if (user.location.latitude) {
+
+                            var markerUser = {};
+                            markerUser.latitude = user.location.latitude;
+                            markerUser.longitude = user.location.longitude;
+                            markerUser.title = user.title;
+                            markerUser.id = user.id;
+                            markerUser.address = user.location.address;
+                            markerUser.city = user.location.city;
+                            markerUser.state = user.location.state;
+                            markerUser.zipCode = user.location.zipCode;
+                            if (user.media) {
+                                markerUser.fullUrl = user.media.fullUrl;
+                                markerUser.icon = {};
+                                markerUser.icon.url = user.media.fullUrl;
+                                markerUser.icon.scaledSize = new google.maps.Size(50, 50);
+                            }
+
+                            if (!user.media) {
+                                markerUser.fullUrl = "https://i.imgur.com/ZOmi5R1.png";
+                                markerUser.icon = {};
+                                markerUser.icon.url = "https://i.imgur.com/ZOmi5R1.png";
+                                markerUser.icon.scaledSize = new google.maps.Size(50, 50);
+                            }
+                            markers.push(markerUser);
+                        }
+
+                    }
+
+                    vm.notify(function () {
+                        vm.items = data.items;
+                        vm.userMarkers = markers;
+                    });
+                }
+
+
+                function _addConnection(id) {
+                    console.log("added")
+
+                    var payload = {}
+                    payload.Contactee = id;
+                    vm.$connectionService.insertConnection(payload, _connectionSuccess, vm.onEmpError);
+                }
+
+                function _receiveUserItem(data) {
+                    vm.notify(function () {
+                        vm.userItem = data.item;
+                    });
+                }
+
+                function _onMarkerClick(markerClicked, userName, markerObject) {
+                    console.log(markerClicked, userName, markerObject);
+
+                    vm.selectedMarker = markerObject;
+                    console.log(vm.selectedMarker);
+                }
+
+                function _SearchUsers() {
+
+                    var payload = {};
+                    payload.PageSize = vm.pageSize;
+                    payload.PageNumber = vm.pageNumber;
+                    payload.Lat = vm.lat;
+                    payload.Lon = vm.lon;
+                    payload.Distance = vm.distance;
+                    payload.SearchString = vm.searchString;
+
+                    vm.$userService.discover(payload, vm.receiveItems, vm.onEventError);
+                }
+
+                function _openModal(ev) {
+                    var modalInstance = vm.$uibModal.open({
+                        animation: true,
+                        templateUrl: 'modalContent.html',
+                        controller: 'modalController as mc',
+                        size: 'sm',
+                        resolve: {
+                            event: function () {
+                                return ev;
+                            }
+                        }
+                    });
+
+                    modalInstance.result.then(function () {
+                        _render();
+                    }, function () {
+                        console.log('Modal dismissed at: ' + new Date());
+                    });
+                }
+
+                function _selectEvent(anEv) {
+                    console.log(anEv);
+                    vm.selectedEvent = anEv;
+                }
+
+                function _connectionSuccess() {
+                    vm.$alertService.success("You are now connected - Ink", "Connection Success!");
+                }
+
+                function _onEventError(jqXhr, error) {
+                    console.error(error);
+                }
+
+                function _Search() {
+                    if (vm.zipCode) {
+                        var addressString = vm.zipCode;
+                        vm.codeAddress(addressString);
+                    }
+                    else {
+                        _render();
+                    }
+                }
+
+                function _codeAddress(address) {
+
+
+                    vm.geocoder.geocode({ 'address': address }, _onCodeAddress);
+                }
+
+                function _onCodeAddress(results, status) {
+                    //vm.notify(function () {
+                    //    vm.geocodeResponse = JSON.stringify(results, null, "     ");
+                    //});
+
+                    if (status == google.maps.GeocoderStatus.OK) {
+
+                        var geometry = results[0].geometry;
+                        var loc = geometry.location;
+
+                        console.log("got location data from API", loc);
+
+
+
+                        //var marker = new google.maps.Marker({
+                        //    map: vm.map,
+                        //    position: loc
+                        //});
+
+                        //if (geometry.viewport)
+                        //    vm.map.fitBounds(geometry.viewport);
+
+                        var lat = loc.lat();
+                        var lon = loc.lng();
+
+                        console.log("found coordinates in reply -> (%s, %s)", lat, lon);
+
+
+                        vm.notify(function () {
+                            vm.lat = lat;
+                            vm.lon = lon;
+                            vm.distance = 25;
+                            vm.map.center.latitude = lat;
+                            vm.map.center.longitude = lon;
+                            vm.map.zoom = 10;
+                            _render();
+                        });
+
+
+                    } else {
+                        alert('Geocode was not successful for the following reason: ' + status);
+                    }
+                }
+
+
+            }
+
+        })();
+
+
+    </script>
+}
+

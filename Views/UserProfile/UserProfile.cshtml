@@ -1,0 +1,40 @@
+﻿@model Sabio.Web.Models.ViewModels.ItemViewModel<Guid>
+@{
+    ViewBag.Title = "User Profile";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<div class="row" data-ng-controller="mainController as main" ng-include="'/Scripts/sabio/app/userProfile/templates/userProfile.html'"></div>
+<div><input type="hidden" id="userId" value="@Model.Item" /></div>
+
+
+
+@section scripts{
+    <link href="~/Scripts/sabio/app/userProfile/css/userProfile.css" rel="stylesheet" />
+
+
+    <!--ajax files-->
+    <script src="~/Scripts/sabio.services.connections.js"></script>
+    <script src="~/Scripts/sabio.services.ink.js"></script>
+    <script src="~/Scripts/sabio.services.export.js"></script>
+
+
+    <!--service factories-->
+    <script src="~/Scripts/sabio/app/services/connectionsService.js"></script>
+    <script src="~/Scripts/sabio/app/services/inkService.js"></script>
+
+
+    <!--directives-->
+    <script src="~/Scripts/sabio/directives/inkCard/inkCardDirective.js"></script>
+
+
+    <!--rotating card css-->
+    <link href="~/Content/rotating-card.css" rel="stylesheet" />
+    <link href="~/Content/rotating-bootstrap.css" rel="stylesheet" />
+    <link href="http://netdna.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" />
+
+
+    <!--angular controller-->
+    <script src="~/Scripts/sabio/app/userProfile/controllers/shareProfileModal.js"></script>
+    <script src="~/Scripts/sabio/app/userProfile/controllers/userProfile.js"></script>
+}

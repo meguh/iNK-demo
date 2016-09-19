@@ -1,0 +1,929 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+
+@*<br />
+
+    <a href="/public/" class="btn btn-info">Add a new user</a>
+
+    <br /><br />*@
+<div ng-controller="adminController as admin">
+    <div class="panel panel-primary">
+        <div class="panel-heading" style="font-weight:bold;font-size:200%; ">Search Users</div>
+        <div class="panel-body">
+            <form role="form" class="form-inline">
+
+                <div class="form-group">
+                    <label for="input-search" class="sr-only">Password</label>
+                    <input id="input-search" class="form-control form-control-rounded" type="text" placeholder="Search Term" ng-keyup="admin.search()" ng-model="admin.queryString">
+                </div>
+
+                <div class="form-group pull-right">
+                    <label>
+                        <select class="form-control input-sm" ng-model="admin.pageSize" ng-change="admin.itemsPerPageHandler(admin.pageSize)">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        records per page
+                    </label>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="panel panel-primary">
+        <div class="panel-heading panel-primary" style="font-weight:bold; font-size: 200%; ">User List</div>
+        <div class="panel-body ">
+
+            <div class="table-responsive b0">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                            <th>Phone Number</th>
+                            <th>Mobile Number</th>
+                            <th>Website</th>
+                            <th>Address</th>
+                            <th>Company</th>
+                            <th>Tags</th>
+                            <th>Edit</th>
+                            <th>Password Reset</th>
+                        </tr>
+                    </thead>
+                    <tbody class="row animate-repeat userTable">
+                        <tr dir-paginate="user in admin.items | filter:admin.q | itemsPerPage: admin.pageSize" current-page="admin.currentPage" total-items="admin.totalItems">
+                            <td>
+                                <a href="">{{user.userId}}</a>
+                            </td>
+                            <td>
+                                <a href="">{{user.profileName}}</a>
+                            </td>
+                            <td>
+                                <a href="">{{user.profileLastName}}</a>
+                            </td>
+                            <td>
+                                <a href="">{{user.profileEmail}}</a>
+                            </td>
+                            <td>
+                                <a href="">{{user.profilePhone}}</a>
+                            </td>
+                            <td>
+                                <a href="">{{user.profileMobile}}</a>
+                            </td>
+                            <td>
+                                <a href="">{{user.profileWebsite}}</a>
+                            </td>
+                            <td>
+                                <a href="">{{user.profileAddress}}</a>
+                            </td>
+                            <td>
+                                <a href="">{{user.profileCompany}}</a>
+                            </td>
+                            <td>
+                                <span data-ng-repeat="tag in user.tags "><a href="" class="mr-sm label label-primary">{{tag.tagName}}</a></span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-oval btn-inverse btn-xs" ng-click="admin.openModal(user)">Edit</button>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-oval btn-inverse btn-xs" ng-click="admin.resetModal(user)">Reset Password</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="other-controller">
+                <div class="text-center">
+                    <dir-pagination-controls boundary-links="true" on-page-change="admin.pageChangeHandler(newPageNumber)" template-url="dirPagination.tpl.html"></dir-pagination-controls>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- MODAL: for editing a profile -->
+<script type="text/ng-template" id="modalContent.html">
+    <div class="modal-header">
+        <h3 class="modal-title">{{mc.newUser.profileName}}</h3>
+    </div>
+    <div class="modal-body">
+        <div role="tabpanel"></div>
+
+        <!----USER EDIT MODAL TABS-->
+        <ul role="tablist" class="nav nav-tabs">
+            <li role="presentation" class="active">
+                <a href="#userInfo" aria-controls="userInfo" role="tab" data-toggle="tab">User Info</a>
+            </li>
+            <li role="presentation">
+                <a href="#userAvatar" aria-controls="userAvatar" role="tab" data-toggle="tab">User Avatar</a>
+            </li>
+            <li role="presentation">
+                <a href="#userTheme" aria-controls="userTheme" role="tab" data-toggle="tab">User Theme</a>
+            </li>
+        </ul>
+        <!--USER EDIT MODAL ENDS-->
+
+        <div class="tab-content">
+
+            <!--USER INFO TAB STARTS-->
+            <div id="userInfo" role="tabpanel" class="tab-pane active">
+                <div class="modal-body" ng-include="'/scripts/user/userForm.html'"></div>
+            </div>
+            <!--USER INFO TAB ENDS-->
+            <!-- USER AVATAR TAB START-->
+            <div id="userAvatar" role="tabpanel" class="tab-pane">
+                <img ng-src="{{mc.newUser.avatar.fullUrl}}" alt="avatar" class="img-thumbnail img-circle thumb128" style="display: block;
+                        margin-left: auto;
+                        margin-right: auto" />
+                <div class="newUser" data-ng-if="!mc.newUser.id"><h3>User must be created first.</h3></div>
+                <div class="userDropzone" data-ng-if="mc.newUser.id">
+                    <form class="dropzone" id="userDropzone" action="/api/media/1"
+                          method="post"
+                          enctype="multipart/form-data"
+                          ng-dropzone
+                          dropzone="mc.dropzone"
+                          dropzone-config="mc.dropzoneAvatarConfig"
+                          group-handlers="{ 'addedfile': mc.dzAddAvatarSuccess, 'error': mc.dzUploadError }"></form>
+                </div>
+            </div>
+            <!-- USER AVATAR TAB END-->
+            <!-- USER THEME TAB START-->
+            <div id="userTheme" role="tabpanel" class="tab-pane">
+                <img ng-src="{{mc.newUser.theme.fullUrl}}" alt="theme" class="img-thumbnail img-responsive thumb128" style="display: block;
+                        margin-left: auto;
+                        margin-right: auto" ; />
+                <div class="newUser" data-ng-if="!mc.newUser.id"><h3>User must be created first.</h3></div>
+                <div class="userDropzone" data-ng-if="mc.newUser.id">
+                    <form class="dropzone" id="userDropzone" action="/api/media/10"
+                          method="post"
+                          enctype="multipart/form-data"
+                          ng-dropzone
+                          dropzone="mc.dropzone"
+                          dropzone-config="mc.dropzoneThemeConfig"
+                          group-handlers="{ 'addedfile': mc.dzAddThemeSuccess, 'error': mc.dzUploadError }"></form>
+                </div>
+            </div>
+            <!-- USER THEME TAB END-->
+        </div>
+    </div>
+</script>
+
+<!--Password reset Modal-->
+<script type="text/ng-template" id="resetModalContent.html">
+
+    <div class="modal-header">
+        <h3 class="modal-title">Reset Password</h3>
+    </div>
+    <form id="resetForm" name="rc.resetForm" ng-submit="rc.submitUpdatePassword()" novalidate>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="control-label" for="input-password">New Password</label>
+                <input type="password"
+                       class="form-control"
+                       ng-class="{'error': rc.showPasswordErrors && !rc.resetForm.newPassword.$valid}"
+                       placeholder="Enter New Password..."
+                       name="psw1"
+                       id="psw1"
+                       ng-model="rc.newUser.newPassword"
+                       ng-minlength="1"
+                       ng-maxlength="100"
+                       required>
+                <div role="alert" class="help-inline error">
+                    <span class="error" ng-show="rc.showPasswordErrors && rc.resetForm.psw1.$error.required">Password is required</span>
+                    <span class="error" ng-show="rc.showPasswordErrors && rc.resetForm.psw1.$error.minlength">Name must be at least 1 character</span>
+                    <span class="error" ng-show="rc.showPasswordErrors && rc.resetForm.psw1.$error.maxlength">Name must be 100 characters or less</span>
+                </div>
+            </div>
+            <br />
+            <div class="form-group">
+                <label class="control-label" for="confirm-password">Confirm Password</label>
+                <input type="password"
+                       class="form-control"
+                       ng-class="{'error': rc.showPasswordErrors && !rc.resetForm.confirmPassword.$valid}"
+                       placeholder="Confirm New Password..."
+                       name="psw2"
+                       id="psw2"
+                       ng-model="rc.newUser.confirmPassword"
+                       data-ng-match="rc.newUser.newPassword"
+                       ng-minlength="1"
+                       ng-maxlength="100"
+                       required>
+                <div role="alert" class="help-inline error">
+                    <span class="error" ng-show="rc.showPasswordErrors && rc.resetForm.psw2.$error.required">Confirm Password is required</span>
+                    <span class="error" ng-show="rc.showPasswordErrors && rc.resetForm.psw2.$error.match">Passwords do not match</span>
+                    <span class="error" ng-show="rc.showPasswordErrors && rc.resetForm.psw2.$error.minlength">Name must be at least 1 character</span>
+                    <span class="error" ng-show="rc.showPasswordErrors && rc.resetForm.psw2.$error.maxlength">Name must be 100 characters or less</span>
+                </div>
+            </div>
+            <br />
+            <input type="submit" class="btn btn-info" value="Send" />
+            <button type="button" class="btn btn-danger" ng-click="rc.cancelPasswordForm()">Cancel</button>
+        </div>
+    </form>
+</script>
+
+
+<script type="text/ng-template" id="/scripts/user/userForm.html">
+    <form id="userForm" name="mc.userForm" ng-submit="mc.submitUpdateUser()" novalidate>
+        <div class="form-group">
+            <label class="control-label" for="Name">Name</label>
+            <input type="text"
+                   class="form-control"
+                   ng-class="{'error': mc.showUserErrors && !mc.userForm.profileName.$valid}"
+                   placeholder="Enter Name..."
+                   name="Name"
+                   id="Name"
+                   ng-model="mc.newUser.profileName"
+                   ng-minlength="1"
+                   ng-maxlength="100"
+                   required>
+            <div role="alert" class="help-inline error">
+                <span class="error" ng-show="mc.showUserErrors && mc.userForm.Name.$error.required">Profile Name is required</span>
+                <span class="error" ng-show="mc.showUserErrors && mc.userForm.Name.$error.minlength">Name must be at least 1 character</span>
+                <span class="error" ng-show="mc.showUserErrors && mc.userForm.Name.$error.maxlength">Name must be 100 characters or less</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="Name">Last Name</label>
+            <input type="text"
+                   class="form-control"
+                   ng-class="{'error': mc.showUserErrors && !mc.userForm.profileLastName.$valid}"
+                   placeholder="Enter Last Name..."
+                   name="LastName"
+                   id="LastName"
+                   ng-model="mc.newUser.profileLastName"
+                   ng-minlength="1"
+                   ng-maxlength="100"
+                   required>
+            <div role="alert" class="help-inline error">
+                <span class="error" ng-show="mc.showUserErrors && mc.userForm.LastName.$error.minlength">Name must be at least 1 character</span>
+                <span class="error" ng-show="mc.showUserErrors && mc.userForm.LastName.$error.maxlength">Name must be 100 characters or less</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="PhoneNumber">Phone Number</label>
+            <input type="text"
+                   class="form-control"
+                   ng-class="{'error': mc.showUserErrors && !mc.userForm.profilePhone.$valid}"
+                   placeholder="Enter Phone Number..."
+                   name="Phone"
+                   id="Phone"
+                   ng-model="mc.newUser.profilePhone">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="MobileNumber">Mobile Number</label>
+            <input type="text"
+                   class="form-control"
+                   ng-class="{'error': mc.showUserErrors && !mc.userForm.profileEmail.$valid}"
+                   placeholder="Enter Mobile Number..."
+                   name="Mobile"
+                   id="Mobile"
+                   ng-model="mc.newUser.profileMobile">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="Website">Website</label>
+            <input type="text"
+                   class="form-control"
+                   ng-class="{'error': mc.showUserErrors && !mc.userForm.profileWebsite.$valid}"
+                   placeholder="Enter Website..."
+                   name="Website"
+                   id="Website"
+                   ng-model="mc.newUser.profileWebsite">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="Address">Address</label>
+            <input type="text"
+                   class="form-control"
+                   ng-class="{'error': mc.showUserErrors && !mc.userForm.profileEmail.$valid}"
+                   placeholder="Enter Address..."
+                   name="Address"
+                   id="Address"
+                   ng-model="mc.newUser.profileAddress">
+
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="Company">Company</label>
+            <input type="text"
+                   class="form-control"
+                   ng-class="{'error': mc.showUserErrors && !mc.userForm.profileCompany.$valid}"
+                   placeholder="Enter Company..."
+                   name="Company"
+                   id="Company"
+                   ng-model="mc.newUser.profileCompany">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="tagPicker">
+                Group Tags:
+                <select chosen
+                        style="width: 150px;"
+                        ng-model="mc.newUser.userTags"
+                        ng-options="option.id as option.tagName for option in mc.tagInfo"
+                        multiple></select>
+            </label>
+        </div>
+        <input type="submit" class="btn btn-info" value="Send" />
+        <button type="button" class="btn btn-danger" ng-click="mc.cancelUserForm()">Cancel</button>
+    </form>
+</script>
+
+
+
+
+@section pageInitScripts{
+
+    <!-- For chosen start-->
+    <link rel="stylesheet" type="text/css" href="/Scripts/bower_components/chosen/chosen.css" />
+    <script src="/Scripts/bower_components/chosen/chosen.jquery.js"></script>
+    <script src="/Scripts/bower_components/angular-chosen-localytics/dist/angular-chosen.min.js"></script>
+    <script src="/Scripts/sabio/modules/sabio.module.angular-chosen.js"></script>
+
+    <!-- For chosen end-->
+
+    <script src="~/Scripts/bower_components/angularUtils-pagination/dirPagination.js"></script>
+    <script src="~/Scripts/sabio/modules/sabio.module.pagination.js"></script>
+
+    <!--DropZone-->
+    <script src="/Scripts/bower_components/dropzone/dist/dropzone.js"></script>
+    <script src="/Scripts/bower_components/angular-dropzone/lib/angular-dropzone.js"></script>
+    <link href="/Scripts/bower_components/dropzone/downloads/css/dropzone.css" rel="stylesheet" />
+    <script src="~/Scripts/sabio/modules/sabio.module.dropzone.js"></script>
+    <!--DropZone-->
+
+}
+
+@section Scripts{
+    <script src="~/Scripts/sabio.services.reset.js"></script>
+    <script src="~/Scripts/sabio.services.users.js"></script>
+    <script src="~/Scripts/sabio.services.ink.js"></script>
+    <script src="~/Scripts/sabio.services.admin.js"></script>
+    <script src="~/Scripts/sabio.services.tags.js"></script>
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" />
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.2/js/toastr.min.js"></script>
+    <script type="text/javascript">
+
+
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                 .factory('$adminService', AdminService);
+
+            AdminService.$inject = ['$baseService', '$sabio'];
+
+            function AdminService($baseService, $sabio) {
+
+                var adminServiceObject = sabio.services.admin;
+
+                var adminService = $baseService.merge(true, {}, adminServiceObject, $baseService);
+
+                console.log("admin service", adminServiceObject);
+
+                return adminService;
+            }
+
+        })();
+
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                 .factory('$resetService', ResetService);
+
+            ResetService.$inject = ['$baseService', '$sabio'];
+
+            function ResetService($baseService, $sabio) {
+
+                var resetServiceObject = sabio.services.reset;
+
+                var resetService = $baseService.merge(true, {}, resetServiceObject, $baseService);
+
+                console.log("admin service", resetServiceObject);
+
+                return resetService;
+            }
+
+        })();
+
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .factory('$tagsAdminService', tagsAdminServiceFactory);
+
+            tagsAdminServiceFactory.$inject = ['$baseService'];
+
+            function tagsAdminServiceFactory($baseService) {
+
+                var tagsAdminServiceCall = sabio.services.tags;
+
+                var newtagsAdminService = $baseService.merge(true, {}, tagsAdminServiceCall, $baseService)
+
+                return newtagsAdminService;
+            }
+        })();
+
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .factory('$userMediaService', userMediaServiceFactory);
+
+            userMediaServiceFactory.$inject = ['$baseService'];
+
+            function userMediaServiceFactory($baseService) {
+
+                var userMediaServiceCall = sabio.services.users;
+
+                var newuserMediaService = $baseService.merge(true, {}, userMediaServiceCall, $baseService)
+
+                return newuserMediaService;
+            }
+        })();
+
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .factory('$userProfileService', userProfileServiceFactory);
+
+            userProfileServiceFactory.$inject = ['$baseService'];
+
+            function userProfileServiceFactory($baseService) {
+
+                var userProfileServiceCall = sabio.services.ink;
+
+                var newuserProfileService = $baseService.merge(true, {}, userProfileServiceCall, $baseService)
+
+                return newuserProfileService;
+            }
+        })();
+
+        (function () {
+            "user strict";
+
+            angular.module(APPNAME)
+                .factory('$userService', UserService);
+
+            UserService.$inject = ['$baseService', '$sabio'];
+
+            function UserService($baseService, $sabio) {
+
+                var userServiceObject = sabio.services.ink;
+
+                var userSerivce = $baseService.merge(true, {}, userServiceObject, $baseService);
+
+                console.log("user service", userServiceObject);
+
+                return userService;
+            }
+        })();
+
+
+
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .controller('adminController', AdminController);
+
+            AdminController.$inject = ['$scope', '$baseController', '$adminService', '$uibModal'];
+
+            function AdminController(
+                $scope
+                , $baseController
+                    , $adminService
+                        , $uibModal) {
+
+                var vm = this;
+                vm.items = null;
+                vm.queryString = null;
+
+                vm.$adminService = $adminService;
+                vm.$scope = $scope;
+                vm.currentPage = 1;
+                vm.pageSize = 10;
+                vm.totalItems = 0;
+                vm.$uibModal = $uibModal;
+
+                vm.getUsers = _getUsers;
+                vm.getUsersError = _getUsersError;
+                vm.pageChangeHandler = _pageChangeHandler;
+                vm.itemsPerPageHandler = _itemsPerPageHandler;
+                vm.search = _search;
+                vm.openModal = _openModal;
+                vm.resetModal = _resetModal;
+
+
+
+                //merging base controller with admincontroller
+                $baseController.merge(vm, $baseController);
+
+                vm.notify = vm.$adminService.getNotifier($scope);
+
+                render();
+
+                function render() {
+
+                    var payload = {
+                        pageSize: vm.pageSize,
+                        pageNumber: vm.currentPage,
+                        queryString: vm.queryString
+                    }
+
+                    vm.$adminService.getAll(payload, vm.getUsers, vm.getUsersError);
+                }
+
+                function _getUsers(data) {
+                    vm.notify(function () {
+                        vm.items = data.items;
+                        vm.totalItems = data.totalItems;
+                    });
+                }
+
+                function _getUsersError(jqXhr, error) {
+                    console.error(error);
+                }
+
+                function _pageChangeHandler(num) {
+                    console.log("change page -> ", num);
+
+                    vm.currentPage = num;
+                    render();
+                }
+
+                function _itemsPerPageHandler(num) {
+                    console.log(num);
+
+                    vm.pageSize = num;
+                    render();
+                }
+
+                function _search() {
+                    console.log("test search", vm.queryString);
+
+                    render();
+                }
+
+                function _openModal(data) {
+                    var modalInstance = vm.$uibModal.open({
+                        animation: true,
+                        templateUrl: 'modalContent.html',
+                        controller: 'modalController as mc',
+                        size: 'md',
+                        resolve: {
+                            selectedUser: function () {
+                                return data;
+                            }
+                        }
+                    });
+
+                    modalInstance.result.then(function (selectedItem) {
+                        vm.modalSelected = selectedItem;
+                        render();
+                    }, function () {
+                        console.log("modal dismissed at: " + new Date());
+                    });
+
+
+                }
+
+                function _resetModal(data) {
+                    var modalInstance = vm.$uibModal.open({
+                        animation: true,
+                        templateUrl: 'resetModalContent.html',
+                        controller: 'resetModalController as rc',
+                        size: 'md',
+                        resolve: {
+                            userSelected: function () {
+                                return data;
+                            }
+                        }
+                    });
+
+                    modalInstance.result.then(function (selectedItem) {
+                        vm.modalSelected = selectedItem;
+                        render();
+                    }, function () {
+                        console.log("modal dismissed at: " + new Date());
+                    });
+
+
+                }
+                return vm;
+            }
+
+
+        })();
+
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .controller('modalController', ModalController);
+
+            ModalController.$inject = ['$scope', '$baseController', '$adminService', '$userProfileService', '$userMediaService', '$tagsAdminService', '$uibModalInstance', 'selectedUser']
+
+            function ModalController(
+                $scope
+                    , $baseController
+                        , $adminService
+                            , $userProfileService
+                                , $userMediaService
+                                    , $tagsAdminService
+                                        , $uibModalInstance
+                                            , selectedUser) {
+
+                var vm = this;
+
+                vm.newUser = selectedUser;
+                vm.userForm = null;
+                vm.showUserErrors = false;
+                vm.taginfo = null;
+
+                //console.log(vm.newUser);
+
+                //vm.getTagsByIdSuccess = _getTagsByIdSuccess;
+                //vm.getTagsByIdError = _getTagsByIdError;
+
+                $baseController.merge(vm, $baseController);
+                vm.$scope = $scope;
+                vm.$uibModalInstance = $uibModalInstance;
+                vm.selectedUser = selectedUser;
+                vm.$adminService = $adminService;
+                vm.$userProfileService = $userProfileService;
+                vm.$userMediaService = $userMediaService;
+                vm.$tagsAdminService = $tagsAdminService;
+                vm.notify = vm.$tagsAdminService.getNotifier($scope);
+
+                vm.submitUpdateUser = _submitUpdateUser;
+                vm.updateUserSuccess = _updateUserSuccess;
+                vm.updateUserError = _updateUserError;
+                vm.getTagsSuccess = _getTagsSuccess;
+                vm.getTagsError = _getTagsError;
+                vm.getFullUserSuccess = _getFullUserSuccess;
+                vm.getFullUserError = _getFullUserError;
+
+                vm.dzAddThemeSuccess = _dzAddThemeSuccess;
+                vm.dzAddAvatarSuccess = _dzAddAvatarSuccess;
+                vm.dzUploadError = _dzUploadError;
+
+
+                _getAllTags();
+
+
+
+
+                function _getFullUser() {
+
+                    vm.$userProfileService.GetUserProfile(vm.selectedUser.id, vm.getFullUserSuccess, vm.getFullUserError);
+
+                }
+
+                function _getFullUserSuccess(data) {
+                    vm.newUser = data.item;
+                    console.log(vm.newUser);
+
+                    _storeUserTags();
+                }
+
+                function _getFullUserError(jqXhr, error) {
+                    console.error(error);
+                }
+
+                function _storeUserTags() {
+
+                    vm.newUser.userTags = [];
+
+                    for (var x = 0; x < vm.newUser.tags.length; x++) {
+                        vm.newUser.userTags.push(vm.newUser.tags[x].id);
+                    };
+                    console.log("user with tag ids", vm.newUser);
+
+                }
+
+                function _getAllTags() {
+
+                    vm.$tagsAdminService.getTagsData(vm.getTagsSuccess, vm.getTagsError);
+
+                };
+
+                function _getTagsSuccess(info) {
+                    console.log('get tags success');
+                    vm.notify(function () {
+                        vm.tagInfo = info.items;
+                    });
+                    console.log(vm.tagInfo);
+
+                    _getFullUser();
+                }
+
+                function _getTagsError(jqXhr, error) {
+                    console.error(error);
+                }
+
+                function _updateUserSuccess() {
+                    console.log("updates user success");
+                    vm.$uibModalInstance.close();
+                };
+
+                function _updateUserError(jqXhr, error) {
+                    console.error(error);
+                }
+
+                vm.cancelUserForm = function () {
+                    console.log('Close Form');
+                    vm.$uibModalInstance.dismiss('cancel');
+                };
+
+
+                //function _getUserTags() {
+                //    vm.$tagsAdminService.getTagsData(vm.getTagsSuccess, vm.getTagsError);
+                //}
+
+                function _submitUpdateUser() {
+                    vm.showUserErrors = true;
+
+
+                    if (vm.userForm.$valid) {
+                        console.log("data is valid! saving user #: " + vm.selectedUser.userId);
+                        vm.$adminService.update(vm.selectedUser.userId, vm.newUser, vm.updateUserSuccess, vm.updateUserError);
+                        console.log(vm.newUser);
+                    }
+                    else {
+                        console.log("form submitted with invalid data =(")
+                    }
+                };
+
+                vm.dropzoneAvatarConfig =
+                {
+                    parallelUploads: 3,
+                    maxFileSize: 30,
+                    "success": function (file, data) {
+                        vm.newUser.mediaId = data.item;
+                        vm.isResultsLoaded = true;
+                        console.log('vm.newUserUser', vm.newUser)
+                        vm.$userMediaService.setAvatar(vm.newUser.mediaId, vm.dzAddAvatarSuccess, _dzUploadError)
+                    }
+                   
+                };
+
+                vm.dropzoneThemeConfig =
+                 {
+                     parallelUploads: 3,
+                     maxFileSize: 30,
+                     "success": function (file, data) {
+                         vm.newUser.themeMediaId = data.item;
+                         vm.isResultsLoaded = true;
+                         console.log('vm.newUserUser', vm.newUser)
+                         vm.$userMediaService.setTheme(vm.newUser.themeMediaId, vm._dzAddThemeSuccess, vm.dzUserError)
+                     }
+                 };
+
+
+                //vm.dzAddAvatarSuccess = {
+
+                //    parallelUploads: 3,
+                //    maxFileSize: 30,
+                //    "success": function (file, data) {
+                //        vm.newUser.mediaId = data.item;
+                //        vm.isResultsLoaded = true;
+                //        console.log('vm.newUserUser', vm.newUser)
+                //        vm.$userMediaService.setAvatar(vm.newUser.mediaId, vm.dzUserAddedFile, vm.dzUserError)
+                //    }
+                //}
+
+                //vm.dzAddThemeSuccess = {
+
+                //    parallelUploads: 3,
+                //    maxFileSize: 30,
+                //    "success": function (file, data) {
+                //        vm.newUser.themeMediaId = data.item;
+                //        vm.isResultsLoaded = true;
+                //        console.log('vm.newUserUser', vm.newUser)
+                //        vm.$userMediaService.setAvatar(vm.newUser.themeMediaId, vm.dzUserAddedFile, vm.dzUserError)
+                //    }
+                //}
+
+                function _dzAddThemeSuccess() {
+                    console.log('_dzAddedFile');
+                    vm.$alertService.success("theme succefully changed!");
+                }
+
+                function _dzAddAvatarSuccess() {
+                    console.log('_dzAddedFile');
+                    vm.$alertService.success("avatar succefully changed!");
+                   
+                }
+
+                function _dzUploadError(errorMessage) {
+                    console.log(errorMessage);
+                    vm.$alertService.error("Avatar not changed!");
+                };
+
+                return vm;
+            }
+
+
+
+        })();
+
+
+        (function () {
+            "use strict";
+
+            angular.module(APPNAME)
+                .controller('resetModalController', ResetModalController);
+
+            ResetModalController.$inject = ['$scope', '$baseController', '$resetService', '$uibModalInstance', 'userSelected']
+
+            function ResetModalController(
+                $scope
+                    , $baseController
+                        , $resetService
+                            , $uibModalInstance
+                                , userSelected) {
+
+                var vm = this;
+
+                vm.newUser = userSelected;
+                vm.showPasswordErrors = false;
+
+                $baseController.merge(vm, $baseController);
+                vm.userSelected = userSelected;
+                vm.$scope = $scope;
+                vm.$resetService = $resetService;
+
+                vm.updatePasswordSuccess = _updatePasswordSuccess;
+                vm.updatePasswordError = _updatePasswordError;
+                vm.submitUpdatePassword = _submitUpdatePassword;
+
+                console.log(vm.newUser);
+
+                function _submitUpdatePassword() {
+                    vm.showPasswordErrors = true;
+
+                    var passwordPayload = {
+                        UserId: vm.newUser.id,
+                        NewPassword: vm.newUser.newPassword
+                    }
+
+                    if (vm.resetForm.$valid) {
+                        console.log("data is valid! saving user #: " + vm.userSelected.userId);
+                        vm.$resetService.adminUpdate(vm.userSelected.userId, passwordPayload, vm.updatePasswordSuccess, vm.updatePasswordError);
+                    }
+                    else {
+                        console.log("form submitted with invalid data =(")
+                    }
+                };
+
+                function _updatePasswordSuccess() {
+                    vm.$alertService.success("Password succefully changed!");
+                    console.log("password successfully reset!");
+                }
+
+                function _updatePasswordError(jqXhr, error) {
+                    vm.$alertService.error("Password did not meet requirements");
+                    console.error(error);
+                }
+
+                return vm
+            }
+
+
+
+        })();
+
+
+    </script>
+
+
+<script type="text/ng-template" id="dirPagination.tpl.html">
+    <ul class="pagination" ng-if="1 < pages.length || !autoHide">
+        <li ng-if="boundaryLinks" ng-class="{ disabled : pagination.current == 1 }">
+            <a href="" ng-click="setCurrent(1)">&laquo;</a>
+        </li>
+        <li ng-if="directionLinks" ng-class="{ disabled : pagination.current == 1 }">
+            <a href="" ng-click="setCurrent(pagination.current - 1)">&lsaquo;</a>
+        </li>
+        <li ng-repeat="pageNumber in pages track by tracker(pageNumber, $index)" ng-class="{ active : pagination.current == pageNumber, disabled : pageNumber == '...' }">
+            <a href="" ng-click="setCurrent(pageNumber)">{{ pageNumber }}</a>
+        </li>
+        <li ng-if="directionLinks" ng-class="{ disabled : pagination.current == pagination.last }">
+            <a href="" ng-click="setCurrent(pagination.current + 1)">&rsaquo;</a>
+        </li>
+        <li ng-if="boundaryLinks" ng-class="{ disabled : pagination.current == pagination.last }">
+            <a href="" ng-click="setCurrent(pagination.last)">&raquo;</a>
+        </li>
+    </ul>
+</script>
+
+
+
+}
